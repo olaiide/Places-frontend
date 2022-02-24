@@ -1,18 +1,27 @@
-import React from 'react'
-import UsersList from '../components/UsersList';
- const Users = () => {
-        const USERS = [
-            {
-              id: 'u1',
-              name: 'Max Schwarz',
-              image:
-                'https://images.pexels.com/photos/839011/pexels-photo-839011.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-              places: 3
-            }
-          ];
-        
-          return <UsersList items={USERS} />;
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import UsersList from "../components/UsersList";
+import { useHttpClient } from "../../shared/hooks/http-hook";
+const Users = () => {
+  const [loadedUsers, setLoadedUsers] = useState([]);
+  const [error, setError] = useState("");
+  const { getRequest, errors, response } = useHttpClient();
+  useEffect(() => {
+   getUsers();
+  
+  }, []);
+  const getUsers = async () => {
+    await axios
+      .get("http://localhost:5000/api/users/")
+      .then((res) => {
+        setLoadedUsers(res.data.users);
+      })
+      .catch((err) => {
+        setError(err.response.data.message);
+      });
+  
+  };
+  return <>{loadedUsers && <UsersList items={loadedUsers} />}</>;
+};
 
-}
-
-export default Users
+export default Users;

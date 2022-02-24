@@ -11,12 +11,14 @@ import {
 } from "../../shared/util/validator";
 import { useForm } from "../../shared/hooks/form-hook";
 import { AuthContext } from "../../shared/context/auth-context";
+import { useHttpClient } from "../../shared/hooks/http-hook";
 import "./Auth.css";
 
 const Auth = () => {
   const auth = useContext(AuthContext);
   const [isLoginMode, setIsLoginMode] = useState(true);
-
+  //const [error, setError] = useState('')
+  const { error, sendRequest } = useHttpClient();
   const [formState, inputHandler, setFormData] = useForm(
     {
       email: {
@@ -57,29 +59,49 @@ const Auth = () => {
 
   const authSubmitHandler = async (event) => {
     event.preventDefault();
+    const options = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
     if (isLoginMode) {
+      const payload = {
+        email: formState.inputs.email.value,
+        password: formState.inputs.password.value,
+      };
+      // axios
+      // .post("http://localhost:5000/api/users/login", payload, options)
+      // .then((res) => {
+      //   console.log(res.data, "Succesfully login");
+      //   auth.login();
+      // })
+      // .catch((err) => {
+      // //  setError(err.response.data.message)
+      // });
+      sendRequest("http://localhost:5000/api/users/login", payload).then(
+        (res) => {
+         // console.log(res.data.message, "Succesfully login");
+          auth.login();
+        }
+      ).catch(
+        err => console.log(err.data)
+      );
     } else {
-      try {
-        const payload = {
-          name: formState.inputs.name.value,
-          email: formState.inputs.email.value,
-          password: formState.inputs.password.value,
-        };
-        const options = {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        };
-        axios
-          .post("http://localhost:5000/api/users/signup", payload, options)
-          .then((res) => {
-            console.log(res.data, 'Succesfully registered');
-          });
-      } catch (err) {
-        console.log(err);
-      }
+      const payload = {
+        name: formState.inputs.name.value,
+        email: formState.inputs.email.value,
+        password: formState.inputs.password.value,
+      };
+      axios
+        .post("http://localhost:5000/api/users/signup", payload, options)
+        .then((res) => {
+          console.log(res.data, "Succesfully registered");
+          auth.login();
+        })
+        .catch((err) => {
+          //      setError(err.response.data.message)
+        });
     }
-    auth.login();
   };
 
   return (
@@ -87,6 +109,7 @@ const Auth = () => {
       <h2>Login Required</h2>
       <hr />
       <form onSubmit={authSubmitHandler}>
+        <p style={{ color: "red" }}>{error}</p>
         {!isLoginMode && (
           <Input
             element='input'
